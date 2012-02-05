@@ -32,7 +32,6 @@
     }]
   , "license": { 
       "type": "MIT"
-    , "http://github.com/bluejack/memcache-client/blob/master/LICENSE" 
+    , "url": "http://github.com/bluejack/memcache-client/blob/master/LICENSE" 
     }
-  }
 }
