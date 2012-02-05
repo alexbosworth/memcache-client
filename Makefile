@@ -4,7 +4,7 @@ LINT  = ./node_modules/.bin/jshint
 all: test lint
 
 install:
-    npm install
+	npm install
 
 lint: 
 	$(LINT) lib
