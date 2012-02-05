@@ -1,0 +1,38 @@
+{
+    "author": "bluejack <bluejack@bluejack.com>"
+  , "name": "memcache-client"
+  , "description": "A small, correct, performant memcache client for node"
+  , "version": "0.2.0"
+  , "main": "./lib/memcache-client"
+  , "keyword": [
+      "memcache"
+    , "client"
+    , "simple"
+    , "complete"
+    , "performant"
+    , "cache"
+    ]
+  , "repository": {
+      "type": "git"
+    , "url": "https://github.com/bluejack/memcache-client"
+    }
+  , "engine": { "node": ">=0.6.6" }
+  , "directories": { "lib": "./lib" }
+  , "dependencies": { }
+  , "devDependencies": {
+      "mocha": "*"
+    , "jshint": "*"
+    , "should": "*"
+    }
+  , "scripts": { "cli": "node bin/mc.js" }
+  , "maintainers": [{
+      "name": "bluejack"
+    , "email": "bluejack@bluejack.com"
+    , "url": "http://bluejack.com/"
+    }]
+  , "license": { 
+      "type": "MIT"
+    , "http://github.com/bluejack/memcache-client/blob/master/LICENSE" 
+    }
+  }
+}
