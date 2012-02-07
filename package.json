@@ -23,6 +23,7 @@
       "mocha": "*"
     , "jshint": "*"
     , "should": "*"
+    , "sinon": "*"
     }
   , "scripts": { "cli": "node bin/mc.js" }
   , "maintainers": [{
