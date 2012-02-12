@@ -5,44 +5,44 @@ var sinon = require('sinon')
 
 describe('MemcacheClient', function () {
 
-    var mc;
-    var stub = sinon.stub(net, 'connect', function () {
-	var sock = new net.Socket();
-	var sockstub = sinon.stub(sock, 'addListener');
-	return sock;
-    });
+  var mc;
+  var stub = sinon.stub(net, 'connect', function () {
+    var sock = new net.Socket();
+    var sockstub = sinon.stub(sock, 'addListener');
+    return sock;
+  });
 
-    beforeEach(function () {
-	mc = new MemcacheClient();
-    });
+  beforeEach(function () {
+    mc = new MemcacheClient();
+  });
 
-    it("should exist after construction", function () {
-	mc.should.exist;
-    });
+  it("should exist after construction", function () {
+    mc.should.exist;
+  });
 
-    it("should write command to server with crlf", function () {
-	var mock = sinon.mock(mc.sock).expects('write').once().withArgs('ABCDEF\r\n');
-	mc.sendServer('ABCDEF');
-	mock.verify();
-    });
+  it("should write command to server with crlf", function () {
+    var mock = sinon.mock(mc.sock).expects('write').once().withArgs('ABCDEF\r\n');
+    mc.sendServer('ABCDEF');
+    mock.verify();
+  });
   
-    // Get
-    it("should handle a correct get request in accordance with the memcache spec.", function() {
-	var mock = sinon.mock(mc.sock).expects('write').once().withArgs('get test-get\r\n');
-	var spy  = sinon.spy();
-	mc.get('test-get', spy);
-	mc.buffer = new Buffer('VALUE fred 0 4\r\nlala\r\nEND\r\n');
-	mc.processBuffer();	
-	spy.calledOnce.should.be.true;
-	var args = spy.args[0];
-	should.not.exist(args[0]);
-	should.exist(args[1]);
-	args[1][0].key.should.equal('fred');
-	args[1][0].flags.should.equal('0');
-	args[1][0].size.should.equal(4);
-	args[1][0].val.should.equal('lala');
-	mock.verify();
-    });
+  // Get
+  it("should handle a correct get request in accordance with the memcache spec.", function() {
+    var mock = sinon.mock(mc.sock).expects('write').once().withArgs('get test-get\r\n');
+    var spy  = sinon.spy();
+    mc.get('test-get', spy);
+    mc.buffer = new Buffer('VALUE fred 0 4\r\nlala\r\nEND\r\n');
+    mc.processBuffer();	
+    spy.calledOnce.should.be.true;
+    var args = spy.args[0];
+    should.not.exist(args[0]);
+    should.exist(args[1]);
+    args[1][0].key.should.equal('fred');
+    args[1][0].flags.should.equal('0');
+    args[1][0].size.should.equal(4);
+    args[1][0].val.should.equal('lala');
+    mock.verify();
+   });
 
     // Gets
     it("should handle a correct gets request in accordance with the memcache spec.", function() {
@@ -199,7 +199,7 @@ describe('MemcacheClient', function () {
     });
 
     // Increment, exists
-    it("should handle a correct increment request with an existing numeric key.", function() {
+    it("should handle a correct increment request with an existing numeric value.", function() {
 	var mock = sinon.mock(mc.sock).expects('write').once().withArgs('incr test-num 1\r\n');
 	var spy  = sinon.spy();
 	mc.incr('test-num',1,spy);
@@ -214,7 +214,7 @@ describe('MemcacheClient', function () {
     });
 
     // Increment, Missing
-    it("should handle a prepend request with a non existing key.", function() {
+    it("should correctly report an error for an increment operation on a non-existent key", function() {
 	var mock = sinon.mock(mc.sock).expects('write').once().withArgs('incr test-numb 3\r\n');
 	var spy  = sinon.spy();
 	mc.incr('test-numb',3,spy);
@@ -224,7 +224,7 @@ describe('MemcacheClient', function () {
 	var args = spy.args[0];
 	should.exist(args[0]);
 	args[0].type.should.equal('NOT_FOUND');
-	args[1].description.should.equal('');
+	args[0].description.should.equal('');
 	should.not.exist(args[1]);
 	mock.verify();
     });
@@ -246,10 +246,51 @@ describe('MemcacheClient', function () {
     });
 
     // Decrement, exists
+    it("should handle a correct decrement request with an existing numeric value", function() {
+	var mock = sinon.mock(mc.sock).expects('write').once().withArgs('decr test-get 1\r\n');
+	var spy  = sinon.spy();
+	mc.decr('test-get',1,spy);
+	mc.buffer = new Buffer('3\r\n');
+	mc.processBuffer();	
+	spy.calledOnce.should.be.true;
+	var args = spy.args[0];
+	should.not.exist(args[0]);
+	should.exist(args[1]);
+	args[1].should.equal(3);
+	mock.verify();
+    });
 
     // Decrement, missing
+    it("should correctly report an error for an decrement operation on a non-existing key.", function() {
+	var mock = sinon.mock(mc.sock).expects('write').once().withArgs('decr test-get 1\r\n');
+	var spy  = sinon.spy();
+	mc.decr('test-get',1,spy);
+	mc.buffer = new Buffer('NOT_FOUND\r\n');
+	mc.processBuffer();	
+	spy.calledOnce.should.be.true;
+	var args = spy.args[0];
+	should.exist(args[0]);
+	args[0].type.should.equal('NOT_FOUND');
+	args[0].description.should.equal('');
+	should.not.exist(args[1]);
+	mock.verify();
+    });
 
     // Decrement, non-numeric
+    it("should correctly report an error for an decrement operation on a non-numeric value.", function() {
+	var mock = sinon.mock(mc.sock).expects('write').once().withArgs('decr test-get 4\r\n');
+	var spy  = sinon.spy();
+	mc.decr('test-get',4,spy);
+	mc.buffer = new Buffer('CLIENT_ERROR cannot increment or decrement non-numeric value\r\n');
+	mc.processBuffer();	
+	spy.calledOnce.should.be.true;
+	var args = spy.args[0];
+	should.exist(args[0]);
+	args[0].type.should.equal('CLIENT_ERROR');
+	args[0].description.should.equal('cannot increment or decrement non-numeric value');
+	should.not.exist(args[1]);
+	mock.verify();
+    });
 
     // Cas, missing
 
