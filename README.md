@@ -19,12 +19,12 @@ own risk!
 
 ### TODO:
 
-    ( ) mock server responses for client-server tests
+    ( ) full test coverage
     ( ) stats (with arguments)
     ( ) validate flaky network
-    ( ) full test coverage
 
 ### Done:
+    (x) mock server responses for client-server tests
     (x) more robust handling of server errors
     (x) validate binary
     (x) delete

@@ -292,15 +292,43 @@ describe('MemcacheClient', function () {
 	mock.verify();
     });
 
+  // Delete
+  it("should correctly delete an existing key.", function() {
+    var mock = sinon.mock(mc.sock).expects('write').once().withArgs('delete test-del\r\n');
+    var spy = sinon.spy();
+    mc.del('test-del',spy);
+    mc.buffer = new Buffer('DELETED\r\n');
+    mc.processBuffer();
+    spy.calledOnce.should.be.true;
+    var args = spy.args[0];
+    should.not.exist(args[0]);
+    should.exist(args[1]);
+    args[1].should.equal('DELETED');
+    mock.verify();
+  });
+
+  // Delete, missing
+  it("should correctly report an error when deleting a non-existent key", function() {
+    var mock = sinon.mock(mc.sock).expects('write').once().withArgs('delete test-del\r\n');
+    var spy  = sinon.spy();
+    mc.del('test-del',spy);
+    mc.buffer = new Buffer('NOT_FOUND\r\n');
+    mc.processBuffer();	
+    spy.calledOnce.should.be.true;
+    var args = spy.args[0];
+    should.exist(args[0]);
+    args[0].should.equal('NOT_FOUND');
+    should.not.exist(args[1]);
+    mock.verify();
+  });
+  
+    // Version
+
     // Cas, missing
 
     // Cas, invalid
 
     // Cas, acceptable
-
-    // Delete
-
-    // Version
 
     // Stats
 
