@@ -19,11 +19,11 @@ own risk!
 
 ### TODO:
 
-    ( ) full test coverage
     ( ) stats (with arguments)
     ( ) validate flaky network
 
 ### Done:
+    (x) full test coverage
     (x) mock server responses for client-server tests
     (x) more robust handling of server errors
     (x) validate binary
@@ -55,6 +55,13 @@ TBD
     var MemcacheClient = require('memcache-client');
     var mc = new MemcacheClient('localhost', 11211);
 
+### Error responses
+
+All memcache calls take as the last parameter a callback that should in turn accept error and response parameters
+in that order. The error param will always have a type property, and may also have a description property. Errors
+may be returned for ordinary conditions such as a key that is not found, or in exceptional cases, such as failure
+in the server connection.
+
 ### Set, Add, Replace, Prepend, Append, Cas
 
 The following snippet sets with the default options, which may be omitted. Note that the value may be a string or
@@ -64,20 +71,29 @@ expiration. The add, replace, prepend and append methods are all identical, with
 results, noted below.
 
     mc.set( 'myKey', 'myVal', { flags: 0, exptime: 0}, function(err, status) {
-      if (!err) {
+      if (!err) { 
+        console.log(status); // 'STORED' on success!
+      }
+    });
+
+    mc.add( 'myKey', 'myVal', function(err, response) { // Flags parameter is optional.
+      if (!err) { // Error types can be NOT_STORED
         console.log(status); // 'STORED' on success!
       }
     });
 
     mc.cas( 'myKey', 'myNewVal', casvalue, {flags: 0, exptime: 0}, function(err, status) {
-      if (!err) {
-        console.log(status); // 'STORED' on success! EXISTS or NOT_FOUND on failure.
+      if (!err) { // Error types can be EXISTS, or NOT_FOUND
+        console.log(status); // 'STORED' on success!
       }
     });
 
-Result Meanings:
+Success Response:
 
 * STORED: Success. The result was stored.
+
+Failure Responses:
+
 * NOT_STORED: Failure. 'add' was attempted on an existing key, or 'replace' on a non-existent key.
 * EXISTS: Failure. 'cas' was attempted on a key that had been changed since fetch.
 * NOT_FOUND: Failure. 'cas' was attempted on a non-existent key. (Some servers return EXISTS in this case also.)
@@ -85,15 +101,16 @@ Result Meanings:
 ### Increment/Decrement
 
 The value parameter in these methods is optional, and defaults to 1.
+Possible error types: NOT_FOUND, when the key does not exist; CLIENT_ERROR, when the value is not numeric.
 
-    mc.incr( 'myKey', 2, function(err, status) {
+    mc.incr( 'myKey', 2, function(err, value) {
       if (!err) {
-        console.log(status); // Value returned on success, or NOT_FOUND.
+        console.log(value); // Value returned on success
       }
     });
-    mc.decr( 'myKey', function(err, status) { // No value parameter, defaults to 1.
+    mc.decr( 'myKey', function(err, value) { // No value parameter, defaults to 1.
       if (!err) {
-        console.log(status);
+        console.log(value);
       }
     ));
 
