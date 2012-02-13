@@ -19,7 +19,6 @@ own risk!
 
 ### TODO:
 
-    ( ) stats (with arguments)
     ( ) validate flaky network
     ( ) Complete documentation
     ( ) Installation ready
@@ -30,6 +29,7 @@ own risk!
     1.2  : Clustering plugin adapter
 
 ### Done:
+    (x) stats (with arguments)
     (x) full test coverage
     (x) mock server responses for client-server tests
     (x) more robust handling of server errors
@@ -168,6 +168,35 @@ A couple of samples.
         // E.g.: how many bytes are being stored?
         // Check your local memcache installation for all the options!
         console.log(stats.bytes);
+      }
+    }
+
+Stats may also take several sub-commands. Currently documented commands are: 'slabs', 'items', and 'sizes'. In
+these cases, appropriate datastructures are returned, as indicated below. Other stats directives, undocumented
+or not-yet-invented will be parsed by the default parser.
+
+Subcommands:
+   
+    mc.stats( 'sizes', function(err, stats) {
+      if (!err) {
+        console.log(stats);
+        // { bytes: <bytes>, items: <items> }
+      }
+    }
+	
+    mc.stats( 'items', function(err, stats) {
+      if (!err) {
+        console.log(stats);
+        // { slabs: [ , { number: <items>, age: <age>, ... etc. } ] } 
+        // Note that slabs is a one-based array.
+      }
+    }
+
+    mc.stats( 'slabs', function(err, stats) {
+      if (!err) {
+        console.log(stats);
+        // { active_slabs: <num slabs>, total_malloced: <total mem>, slabs: [ , { chunk_size: <size>, ... } ] }
+        // Note that here also, slabs is a one based array.
       }
     }
 

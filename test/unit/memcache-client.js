@@ -384,7 +384,7 @@ describe('MemcacheClient', function () {
 
   // Stats
   it("should correctly respond to a stats request", function() {
-    var mock = sinon.mock(mc).expects('sendServer').once().withArgs('stats');
+    var mock = sinon.mock(mc).expects('sendServer').once().withArgs('stats ');
     var spy  = sinon.spy();
     mc.stats(spy);
     mc.buffer = new Buffer('STAT pid 1010\r\nSTAT uptime 12345\r\nEND\r\n');
@@ -398,5 +398,54 @@ describe('MemcacheClient', function () {
     mock.verify();
   });  
 
+  // Stats Items
+  it("should correctly respond to a stats items request", function() {
+    var mock = sinon.mock(mc).expects('sendServer').once().withArgs('stats items');
+    var spy = sinon.spy();
+    mc.stats('items', spy);
+    mc.buffer = new Buffer('STAT items:1:number 2\r\nSTAT items:1:age 529885\r\nEND\r\n');
+    mc.processBuffer();
+    spy.calledOnce.should.be.true;
+    var args = spy.args[0];
+    should.not.exist(args[0]);
+    should.exist(args[1]);
+    args[1].slabs[1].number.should.equal('2');
+    args[1].slabs[1].age.should.equal('529885');
+    mock.verify();
+  });
+
+  // Stats Sizes
+  it("should correctly respond to a stats sizes request", function() {
+    var mock = sinon.mock(mc).expects('sendServer').once().withArgs('stats sizes');
+    var spy = sinon.spy();
+    mc.stats('sizes', spy);
+    mc.buffer = new Buffer('STAT 101010 21\r\nEND\r\n');
+    mc.processBuffer();
+    spy.calledOnce.should.be.true;
+    var args = spy.args[0];
+    should.not.exist(args[0]);
+    should.exist(args[1]);
+    args[1].bytes.should.equal('101010');
+    args[1].items.should.equal('21');
+    mock.verify();
+  });
+
+  // Stats Slabs
+  it("should correctly respond to a stats slabs request", function() {
+    var mock = sinon.mock(mc).expects('sendServer').once().withArgs('stats slabs');
+    var spy = sinon.spy();
+    mc.stats('slabs', spy);
+    mc.buffer = new Buffer('STAT 1:cas_hits 5\r\nSTAT 1:cas_badval 0\r\nSTAT active_slabs 1\r\nSTAT total_malloced 1048512\r\nEND\r\n');
+    mc.processBuffer();
+    spy.calledOnce.should.be.true;
+    var args = spy.args[0];
+    should.not.exist(args[0]);
+    should.exist(args[1]);
+    args[1].active_slabs.should.equal('1');
+    args[1].total_malloced.should.equal('1048512');
+    args[1].slabs[1].cas_badval.should.equal('0');
+    args[1].slabs[1].cas_hits.should.equal('5');
+    mock.verify();
+  });
 
 });
