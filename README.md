@@ -21,6 +21,13 @@ own risk!
 
     ( ) stats (with arguments)
     ( ) validate flaky network
+    ( ) Complete documentation
+    ( ) Installation ready
+
+### Roadmap
+
+    1.1  : JSON, Binary adapters
+    1.2  : Clustering plugin adapter
 
 ### Done:
     (x) full test coverage
@@ -166,4 +173,6 @@ A couple of samples.
 
 ## Testing
 
-Unit tests may be run by executing 'make test'. Current status: incomplete.
+Unit tests may be run by executing 'make test'. All methods have basic test and error coverage. There are some
+untested edge cases and network conditions remaining.
+
