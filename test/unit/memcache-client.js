@@ -6,14 +6,10 @@ var sinon = require('sinon')
 describe('MemcacheClient', function () {
 
   var mc;
-  var stub = sinon.stub(net, 'connect', function () {
-    var sock = new net.Socket();
-    var sockstub = sinon.stub(sock, 'addListener');
-    return sock;
-  });
 
   beforeEach(function () {
     mc = new MemcacheClient();
+    mc.sock = new net.Socket();
   });
 
   it("should exist after construction", function () {
@@ -46,7 +42,8 @@ describe('MemcacheClient', function () {
 
   // Gets
   it("should handle a correct gets request in accordance with the memcache spec.", function() {
-    var mock = sinon.mock(mc.sock).expects('write').once().withArgs('gets test-get\r\n');
+    var mock = sinon.mock(mc.sock);
+    mock.expects('write').once().withArgs('gets test-get\r\n');
     var spy  = sinon.spy();
     mc.gets('test-get', spy);
     mc.buffer = new Buffer('VALUE fred 0 4 1000\r\nlala\r\nEND\r\n');
@@ -65,7 +62,9 @@ describe('MemcacheClient', function () {
 
   // Set
   it("should handle a correct set request in accordance with the memcache spec.", function() {
-    var mock = sinon.mock(mc).expects('sendServer').once().withArgs('set test-get 0 0 4', 'lala');
+    var mock = sinon.mock(mc.sock);
+    mock.expects('write').withArgs('set test-get 0 0 4\r\n');
+    mock.expects('write').once().withArgs('lala\r\n');
     var spy  = sinon.spy();
     mc.set('test-get','lala',spy);
     mc.buffer = new Buffer('STORED\r\n');
@@ -78,6 +77,23 @@ describe('MemcacheClient', function () {
     mock.verify();
   });
  
+  // Set with numeric key and value
+  it("should correctly handle set requests with numeric keys and values", function() {
+    var mock = sinon.mock(mc.sock);
+    mock.expects('write').withArgs('set 43 0 0 2\r\n');
+    mock.expects('write').withArgs('21\r\n');
+    var spy = sinon.spy();
+    mc.set(43, 21, spy);
+    mc.buffer = new Buffer('STORED\r\n');
+    mc.processBuffer();	
+    spy.calledOnce.should.be.true;
+    var args = spy.args[0];
+    should.not.exist(args[0]);
+    should.exist(args[1]);
+    args[1].should.equal('STORED');
+    mock.verify();
+  });
+
   // Add missing
   it("should handle a correct add request without an existing key as per memcache spec.", function() {
     var mock = sinon.mock(mc).expects('sendServer').once().withArgs('add test-get 0 0 4', 'lala');

@@ -19,7 +19,6 @@ own risk!
 
 ### TODO:
 
-    ( ) validate flaky network
     ( ) Complete documentation
     ( ) Installation ready
 
@@ -29,6 +28,7 @@ own risk!
     1.2  : Clustering plugin adapter
 
 ### Done:
+    (x) validate flaky network
     (x) stats (with arguments)
     (x) full test coverage
     (x) mock server responses for client-server tests

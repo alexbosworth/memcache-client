@@ -12,6 +12,9 @@ lint:
 test:
 	$(MOCHA) --reporter list test/unit/*
 
+integration:
+	$(MOCHA) --timeout 10000 --reporter list test/integration/*
+
 .PHONY: install lint test
 
 
