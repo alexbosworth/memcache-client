@@ -17,7 +17,7 @@ describe('MemcacheClient', function () {
   });
 
   it("should write command to server with crlf", function () {
-    var mock = sinon.mock(mc.sock).expects('write').once().withArgs('ABCDEF\r\n');
+    var mock = sinon.mock(cli.sock).expects('write').once().withArgs('ABCDEF\r\n');
     cli.sendServer('ABCDEF');
     mock.verify();
   });
@@ -96,7 +96,7 @@ describe('MemcacheClient', function () {
 
   // Add missing
   it("should handle a correct add request without an existing key as per memcache spec.", function () {
-    var mock = sinon.mock(mc).expects('sendServer').once().withArgs('add test-get 0 0 4', 'lala');
+    var mock = sinon.mock(cli).expects('sendServer').once().withArgs('add test-get 0 0 4', 'lala');
     var spy = sinon.spy();
     cli.add('test-get', 'lala', spy);
     cli.buffer = new Buffer('STORED\r\n');
@@ -111,7 +111,7 @@ describe('MemcacheClient', function () {
 
   // Add, exists
   it("should handle a correct add request with an existing key as per memcache spec.", function () {
-    var mock = sinon.mock(mc).expects('sendServer').once().withArgs('add test-get 0 0 4', 'lala');
+    var mock = sinon.mock(cli).expects('sendServer').once().withArgs('add test-get 0 0 4', 'lala');
     var spy = sinon.spy();
     cli.add('test-get', 'lala', spy);
     cli.buffer = new Buffer('NOT_STORED\r\n');
@@ -126,7 +126,7 @@ describe('MemcacheClient', function () {
 
   // Replace, exists
   it("should handle a correct replace request with an existing key as per memcache spec.", function () {
-    var mock = sinon.mock(mc).expects('sendServer').once().withArgs('replace test-get 0 0 4', 'lala');
+    var mock = sinon.mock(cli).expects('sendServer').once().withArgs('replace test-get 0 0 4', 'lala');
     var spy = sinon.spy();
     cli.replace('test-get', 'lala', spy);
     cli.buffer = new Buffer('STORED\r\n');
@@ -141,7 +141,7 @@ describe('MemcacheClient', function () {
 
   // Replace, Missing
   it("should handle a correct replace request with a non existing key as per memcache spec.", function () {
-    var mock = sinon.mock(mc).expects('sendServer').once().withArgs('replace test-get 0 0 4', 'lala');
+    var mock = sinon.mock(cli).expects('sendServer').once().withArgs('replace test-get 0 0 4', 'lala');
     var spy = sinon.spy();
     cli.replace('test-get', 'lala', spy);
     cli.buffer = new Buffer('NOT_STORED\r\n');
@@ -156,7 +156,7 @@ describe('MemcacheClient', function () {
 
   // Append, exists
   it("should handle a correct append request with an existing key as per memcache spec.", function () {
-    var mock = sinon.mock(mc).expects('sendServer').once().withArgs('append test-get 0 0 4', 'lala');
+    var mock = sinon.mock(cli).expects('sendServer').once().withArgs('append test-get 0 0 4', 'lala');
     var spy = sinon.spy();
     cli.append('test-get', 'lala', spy);
     cli.buffer = new Buffer('STORED\r\n');
@@ -171,7 +171,7 @@ describe('MemcacheClient', function () {
 
   // Append, missing
   it("should handle a correct append request with a non existing key as per memcache spec.", function () {
-    var mock = sinon.mock(mc).expects('sendServer').once().withArgs('append test-get 0 0 4', 'lala');
+    var mock = sinon.mock(cli).expects('sendServer').once().withArgs('append test-get 0 0 4', 'lala');
     var spy = sinon.spy();
     cli.append('test-get', 'lala', spy);
     cli.buffer = new Buffer('NOT_STORED\r\n');
@@ -186,7 +186,7 @@ describe('MemcacheClient', function () {
 
   // Prepend, exists
   it("should handle a correct prepend request with an existing key as per memcache spec.", function () {
-    var mock = sinon.mock(mc).expects('sendServer').once().withArgs('prepend test-get 0 0 4', 'lala');
+    var mock = sinon.mock(cli).expects('sendServer').once().withArgs('prepend test-get 0 0 4', 'lala');
     var spy = sinon.spy();
     cli.prepend('test-get', 'lala', spy);
     cli.buffer = new Buffer('STORED\r\n');
@@ -201,7 +201,7 @@ describe('MemcacheClient', function () {
 
   // Prepend, missing
   it("should handle a correct prepend request with a non existing key as per memcache spec.", function () {
-    var mock = sinon.mock(mc).expects('sendServer').once().withArgs('prepend test-get 0 0 4', 'lala');
+    var mock = sinon.mock(cli).expects('sendServer').once().withArgs('prepend test-get 0 0 4', 'lala');
     var spy = sinon.spy();
     cli.prepend('test-get', 'lala', spy);
     cli.buffer = new Buffer('NOT_STORED\r\n');
@@ -355,7 +355,7 @@ describe('MemcacheClient', function () {
 
   // Cas - AOK
   it("should handle a correct cas request with an existing key as per memcache spec.", function () {
-    var mock = sinon.mock(mc).expects('sendServer').once().withArgs('cas test-get 0 0 4 1000', 'lala');
+    var mock = sinon.mock(cli).expects('sendServer').once().withArgs('cas test-get 0 0 4 1000', 'lala');
     var spy = sinon.spy();
     cli.cas('test-get', 'lala', 1000, spy);
     cli.buffer = new Buffer('STORED\r\n');
@@ -370,7 +370,7 @@ describe('MemcacheClient', function () {
 
   // Cas - Missing
   it("should correctly respond with an error to a cas request with a missing key", function () {
-    var mock = sinon.mock(mc).expects('sendServer').once().withArgs('cas test-get 0 0 4 1000', 'lala');
+    var mock = sinon.mock(cli).expects('sendServer').once().withArgs('cas test-get 0 0 4 1000', 'lala');
     var spy = sinon.spy();
     cli.cas('test-get', 'lala', 1000, spy);
     cli.buffer = new Buffer('NOT_FOUND\r\n');
@@ -385,7 +385,7 @@ describe('MemcacheClient', function () {
 
   // Cas - Invalid cas number
   it("should correctly respond with an error to a cas request with an invalid cas number", function () {
-    var mock = sinon.mock(mc).expects('sendServer').once().withArgs('cas test-get 0 0 4 1000', 'lala');
+    var mock = sinon.mock(cli).expects('sendServer').once().withArgs('cas test-get 0 0 4 1000', 'lala');
     var spy = sinon.spy();
     cli.cas('test-get', 'lala', 1000, spy);
     cli.buffer = new Buffer('EXISTS\r\n');
@@ -400,7 +400,7 @@ describe('MemcacheClient', function () {
 
   // Stats
   it("should correctly respond to a stats request", function () {
-    var mock = sinon.mock(mc).expects('sendServer').once().withArgs('stats ');
+    var mock = sinon.mock(cli).expects('sendServer').once().withArgs('stats ');
     var spy = sinon.spy();
     cli.stats(spy);
     cli.buffer = new Buffer('STAT pid 1010\r\nSTAT uptime 12345\r\nEND\r\n');
@@ -416,7 +416,7 @@ describe('MemcacheClient', function () {
 
   // Stats Items
   it("should correctly respond to a stats items request", function () {
-    var mock = sinon.mock(mc).expects('sendServer').once().withArgs('stats items');
+    var mock = sinon.mock(cli).expects('sendServer').once().withArgs('stats items');
     var spy = sinon.spy();
     cli.stats('items', spy);
     cli.buffer = new Buffer('STAT items:1:number 2\r\nSTAT items:1:age 529885\r\nEND\r\n');
@@ -432,7 +432,7 @@ describe('MemcacheClient', function () {
 
   // Stats Sizes
   it("should correctly respond to a stats sizes request", function () {
-    var mock = sinon.mock(mc).expects('sendServer').once().withArgs('stats sizes');
+    var mock = sinon.mock(cli).expects('sendServer').once().withArgs('stats sizes');
     var spy = sinon.spy();
     cli.stats('sizes', spy);
     cli.buffer = new Buffer('STAT 101010 21\r\nEND\r\n');
@@ -448,7 +448,7 @@ describe('MemcacheClient', function () {
 
   // Stats Slabs
   it("should correctly respond to a stats slabs request", function () {
-    var mock = sinon.mock(mc).expects('sendServer').once().withArgs('stats slabs');
+    var mock = sinon.mock(cli).expects('sendServer').once().withArgs('stats slabs');
     var spy = sinon.spy();
     cli.stats('slabs', spy);
     cli.buffer = new Buffer('STAT 1:cas_hits 5\r\nSTAT 1:cas_badval 0\r\nSTAT active_slabs 1\r\nSTAT total_malloced 1048512\r\nEND\r\n');
