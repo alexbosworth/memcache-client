@@ -1,34 +1,34 @@
 var sinon = require('sinon')
   , should = require('should')
-  , MemcacheClient = require('../../lib/memcache-client')
+  , mc = require('../../lib/memcache-client')
   , net = require('net');
 
 describe('MemcacheClient', function () {
 
-  var mc;
+  var cli;
 
   beforeEach(function () {
-    mc = new MemcacheClient();
-    mc.sock = new net.Socket();
+    cli = new mc.Client();
+    cli.sock = new net.Socket();
   });
 
   it("should exist after construction", function () {
-    mc.should.exist;
+    cli.should.exist;
   });
 
   it("should write command to server with crlf", function () {
     var mock = sinon.mock(mc.sock).expects('write').once().withArgs('ABCDEF\r\n');
-    mc.sendServer('ABCDEF');
+    cli.sendServer('ABCDEF');
     mock.verify();
   });
 
   // Get
   it("should handle a correct get request in accordance with the memcache spec.", function () {
-    var mock = sinon.mock(mc.sock).expects('write').once().withArgs('get test-get\r\n');
+    var mock = sinon.mock(cli.sock).expects('write').once().withArgs('get test-get\r\n');
     var spy = sinon.spy();
-    mc.get('test-get', spy);
-    mc.buffer = new Buffer('VALUE fred 0 4\r\nlala\r\nEND\r\n');
-    mc.processBuffer();
+    cli.get('test-get', spy);
+    cli.buffer = new Buffer('VALUE fred 0 4\r\nlala\r\nEND\r\n');
+    cli.processBuffer();
     spy.calledOnce.should.be.true;
     var args = spy.args[0];
     should.not.exist(args[0]);
@@ -42,12 +42,12 @@ describe('MemcacheClient', function () {
 
   // Gets
   it("should handle a correct gets request in accordance with the memcache spec.", function () {
-    var mock = sinon.mock(mc.sock);
+    var mock = sinon.mock(cli.sock);
     mock.expects('write').once().withArgs('gets test-get\r\n');
     var spy = sinon.spy();
-    mc.gets('test-get', spy);
-    mc.buffer = new Buffer('VALUE fred 0 4 1000\r\nlala\r\nEND\r\n');
-    mc.processBuffer();
+    cli.gets('test-get', spy);
+    cli.buffer = new Buffer('VALUE fred 0 4 1000\r\nlala\r\nEND\r\n');
+    cli.processBuffer();
     spy.calledOnce.should.be.true;
     var args = spy.args[0];
     should.not.exist(args[0]);
@@ -62,13 +62,13 @@ describe('MemcacheClient', function () {
 
   // Set
   it("should handle a correct set request in accordance with the memcache spec.", function () {
-    var mock = sinon.mock(mc.sock);
+    var mock = sinon.mock(cli.sock);
     mock.expects('write').withArgs('set test-get 0 0 4\r\n');
     mock.expects('write').once().withArgs('lala\r\n');
     var spy = sinon.spy();
-    mc.set('test-get', 'lala', spy);
-    mc.buffer = new Buffer('STORED\r\n');
-    mc.processBuffer();
+    cli.set('test-get', 'lala', spy);
+    cli.buffer = new Buffer('STORED\r\n');
+    cli.processBuffer();
     spy.calledOnce.should.be.true;
     var args = spy.args[0];
     should.not.exist(args[0]);
@@ -79,13 +79,13 @@ describe('MemcacheClient', function () {
 
   // Set with numeric key and value
   it("should correctly handle set requests with numeric keys and values", function () {
-    var mock = sinon.mock(mc.sock);
+    var mock = sinon.mock(cli.sock);
     mock.expects('write').withArgs('set 43 0 0 2\r\n');
     mock.expects('write').withArgs('21\r\n');
     var spy = sinon.spy();
-    mc.set(43, 21, spy);
-    mc.buffer = new Buffer('STORED\r\n');
-    mc.processBuffer();
+    cli.set(43, 21, spy);
+    cli.buffer = new Buffer('STORED\r\n');
+    cli.processBuffer();
     spy.calledOnce.should.be.true;
     var args = spy.args[0];
     should.not.exist(args[0]);
@@ -98,9 +98,9 @@ describe('MemcacheClient', function () {
   it("should handle a correct add request without an existing key as per memcache spec.", function () {
     var mock = sinon.mock(mc).expects('sendServer').once().withArgs('add test-get 0 0 4', 'lala');
     var spy = sinon.spy();
-    mc.add('test-get', 'lala', spy);
-    mc.buffer = new Buffer('STORED\r\n');
-    mc.processBuffer();
+    cli.add('test-get', 'lala', spy);
+    cli.buffer = new Buffer('STORED\r\n');
+    cli.processBuffer();
     spy.calledOnce.should.be.true;
     var args = spy.args[0];
     should.not.exist(args[0]);
@@ -113,9 +113,9 @@ describe('MemcacheClient', function () {
   it("should handle a correct add request with an existing key as per memcache spec.", function () {
     var mock = sinon.mock(mc).expects('sendServer').once().withArgs('add test-get 0 0 4', 'lala');
     var spy = sinon.spy();
-    mc.add('test-get', 'lala', spy);
-    mc.buffer = new Buffer('NOT_STORED\r\n');
-    mc.processBuffer();
+    cli.add('test-get', 'lala', spy);
+    cli.buffer = new Buffer('NOT_STORED\r\n');
+    cli.processBuffer();
     spy.calledOnce.should.be.true;
     var args = spy.args[0];
     should.exist(args[0]);
@@ -128,9 +128,9 @@ describe('MemcacheClient', function () {
   it("should handle a correct replace request with an existing key as per memcache spec.", function () {
     var mock = sinon.mock(mc).expects('sendServer').once().withArgs('replace test-get 0 0 4', 'lala');
     var spy = sinon.spy();
-    mc.replace('test-get', 'lala', spy);
-    mc.buffer = new Buffer('STORED\r\n');
-    mc.processBuffer();
+    cli.replace('test-get', 'lala', spy);
+    cli.buffer = new Buffer('STORED\r\n');
+    cli.processBuffer();
     spy.calledOnce.should.be.true;
     var args = spy.args[0];
     should.not.exist(args[0]);
@@ -143,9 +143,9 @@ describe('MemcacheClient', function () {
   it("should handle a correct replace request with a non existing key as per memcache spec.", function () {
     var mock = sinon.mock(mc).expects('sendServer').once().withArgs('replace test-get 0 0 4', 'lala');
     var spy = sinon.spy();
-    mc.replace('test-get', 'lala', spy);
-    mc.buffer = new Buffer('NOT_STORED\r\n');
-    mc.processBuffer();
+    cli.replace('test-get', 'lala', spy);
+    cli.buffer = new Buffer('NOT_STORED\r\n');
+    cli.processBuffer();
     spy.calledOnce.should.be.true;
     var args = spy.args[0];
     should.exist(args[0]);
@@ -158,9 +158,9 @@ describe('MemcacheClient', function () {
   it("should handle a correct append request with an existing key as per memcache spec.", function () {
     var mock = sinon.mock(mc).expects('sendServer').once().withArgs('append test-get 0 0 4', 'lala');
     var spy = sinon.spy();
-    mc.append('test-get', 'lala', spy);
-    mc.buffer = new Buffer('STORED\r\n');
-    mc.processBuffer();
+    cli.append('test-get', 'lala', spy);
+    cli.buffer = new Buffer('STORED\r\n');
+    cli.processBuffer();
     spy.calledOnce.should.be.true;
     var args = spy.args[0];
     should.not.exist(args[0]);
@@ -173,9 +173,9 @@ describe('MemcacheClient', function () {
   it("should handle a correct append request with a non existing key as per memcache spec.", function () {
     var mock = sinon.mock(mc).expects('sendServer').once().withArgs('append test-get 0 0 4', 'lala');
     var spy = sinon.spy();
-    mc.append('test-get', 'lala', spy);
-    mc.buffer = new Buffer('NOT_STORED\r\n');
-    mc.processBuffer();
+    cli.append('test-get', 'lala', spy);
+    cli.buffer = new Buffer('NOT_STORED\r\n');
+    cli.processBuffer();
     spy.calledOnce.should.be.true;
     var args = spy.args[0];
     should.exist(args[0]);
@@ -188,9 +188,9 @@ describe('MemcacheClient', function () {
   it("should handle a correct prepend request with an existing key as per memcache spec.", function () {
     var mock = sinon.mock(mc).expects('sendServer').once().withArgs('prepend test-get 0 0 4', 'lala');
     var spy = sinon.spy();
-    mc.prepend('test-get', 'lala', spy);
-    mc.buffer = new Buffer('STORED\r\n');
-    mc.processBuffer();
+    cli.prepend('test-get', 'lala', spy);
+    cli.buffer = new Buffer('STORED\r\n');
+    cli.processBuffer();
     spy.calledOnce.should.be.true;
     var args = spy.args[0];
     should.not.exist(args[0]);
@@ -203,9 +203,9 @@ describe('MemcacheClient', function () {
   it("should handle a correct prepend request with a non existing key as per memcache spec.", function () {
     var mock = sinon.mock(mc).expects('sendServer').once().withArgs('prepend test-get 0 0 4', 'lala');
     var spy = sinon.spy();
-    mc.prepend('test-get', 'lala', spy);
-    mc.buffer = new Buffer('NOT_STORED\r\n');
-    mc.processBuffer();
+    cli.prepend('test-get', 'lala', spy);
+    cli.buffer = new Buffer('NOT_STORED\r\n');
+    cli.processBuffer();
     spy.calledOnce.should.be.true;
     var args = spy.args[0];
     should.exist(args[0]);
@@ -216,11 +216,11 @@ describe('MemcacheClient', function () {
 
   // Increment, exists
   it("should handle a correct increment request with an existing numeric value.", function () {
-    var mock = sinon.mock(mc.sock).expects('write').once().withArgs('incr test-num 1\r\n');
+    var mock = sinon.mock(cli.sock).expects('write').once().withArgs('incr test-num 1\r\n');
     var spy = sinon.spy();
-    mc.incr('test-num', 1, spy);
-    mc.buffer = new Buffer('3\r\n');
-    mc.processBuffer();
+    cli.incr('test-num', 1, spy);
+    cli.buffer = new Buffer('3\r\n');
+    cli.processBuffer();
     spy.calledOnce.should.be.true;
     var args = spy.args[0];
     should.not.exist(args[0]);
@@ -231,11 +231,11 @@ describe('MemcacheClient', function () {
 
   // Increment, Missing
   it("should correctly report an error for an increment operation on a non-existent key", function () {
-    var mock = sinon.mock(mc.sock).expects('write').once().withArgs('incr test-numb 3\r\n');
+    var mock = sinon.mock(cli.sock).expects('write').once().withArgs('incr test-numb 3\r\n');
     var spy = sinon.spy();
-    mc.incr('test-numb', 3, spy);
-    mc.buffer = new Buffer('NOT_FOUND\r\n');
-    mc.processBuffer();
+    cli.incr('test-numb', 3, spy);
+    cli.buffer = new Buffer('NOT_FOUND\r\n');
+    cli.processBuffer();
     spy.calledOnce.should.be.true;
     var args = spy.args[0];
     should.exist(args[0]);
@@ -247,11 +247,11 @@ describe('MemcacheClient', function () {
 
   // Increment, non-numeric
   it("should correctly report an error for an increment operation on a non-numeric value.", function () {
-    var mock = sinon.mock(mc.sock).expects('write').once().withArgs('incr test-get 4\r\n');
+    var mock = sinon.mock(cli.sock).expects('write').once().withArgs('incr test-get 4\r\n');
     var spy = sinon.spy();
-    mc.incr('test-get', 4, spy);
-    mc.buffer = new Buffer('CLIENT_ERROR cannot increment or decrement non-numeric value\r\n');
-    mc.processBuffer();
+    cli.incr('test-get', 4, spy);
+    cli.buffer = new Buffer('CLIENT_ERROR cannot increment or decrement non-numeric value\r\n');
+    cli.processBuffer();
     spy.calledOnce.should.be.true;
     var args = spy.args[0];
     should.exist(args[0]);
@@ -263,11 +263,11 @@ describe('MemcacheClient', function () {
 
   // Decrement, exists
   it("should handle a correct decrement request with an existing numeric value", function () {
-    var mock = sinon.mock(mc.sock).expects('write').once().withArgs('decr test-get 1\r\n');
+    var mock = sinon.mock(cli.sock).expects('write').once().withArgs('decr test-get 1\r\n');
     var spy = sinon.spy();
-    mc.decr('test-get', 1, spy);
-    mc.buffer = new Buffer('3\r\n');
-    mc.processBuffer();
+    cli.decr('test-get', 1, spy);
+    cli.buffer = new Buffer('3\r\n');
+    cli.processBuffer();
     spy.calledOnce.should.be.true;
     var args = spy.args[0];
     should.not.exist(args[0]);
@@ -278,11 +278,11 @@ describe('MemcacheClient', function () {
 
   // Decrement, missing
   it("should correctly report an error for an decrement operation on a non-existing key.", function () {
-    var mock = sinon.mock(mc.sock).expects('write').once().withArgs('decr test-get 1\r\n');
+    var mock = sinon.mock(cli.sock).expects('write').once().withArgs('decr test-get 1\r\n');
     var spy = sinon.spy();
-    mc.decr('test-get', 1, spy);
-    mc.buffer = new Buffer('NOT_FOUND\r\n');
-    mc.processBuffer();
+    cli.decr('test-get', 1, spy);
+    cli.buffer = new Buffer('NOT_FOUND\r\n');
+    cli.processBuffer();
     spy.calledOnce.should.be.true;
     var args = spy.args[0];
     should.exist(args[0]);
@@ -294,11 +294,11 @@ describe('MemcacheClient', function () {
 
   // Decrement, non-numeric
   it("should correctly report an error for an decrement operation on a non-numeric value.", function () {
-    var mock = sinon.mock(mc.sock).expects('write').once().withArgs('decr test-get 4\r\n');
+    var mock = sinon.mock(cli.sock).expects('write').once().withArgs('decr test-get 4\r\n');
     var spy = sinon.spy();
-    mc.decr('test-get', 4, spy);
-    mc.buffer = new Buffer('CLIENT_ERROR cannot increment or decrement non-numeric value\r\n');
-    mc.processBuffer();
+    cli.decr('test-get', 4, spy);
+    cli.buffer = new Buffer('CLIENT_ERROR cannot increment or decrement non-numeric value\r\n');
+    cli.processBuffer();
     spy.calledOnce.should.be.true;
     var args = spy.args[0];
     should.exist(args[0]);
@@ -310,11 +310,11 @@ describe('MemcacheClient', function () {
 
   // Delete
   it("should correctly delete an existing key.", function () {
-    var mock = sinon.mock(mc.sock).expects('write').once().withArgs('delete test-del\r\n');
+    var mock = sinon.mock(cli.sock).expects('write').once().withArgs('delete test-del\r\n');
     var spy = sinon.spy();
-    mc.del('test-del', spy);
-    mc.buffer = new Buffer('DELETED\r\n');
-    mc.processBuffer();
+    cli.del('test-del', spy);
+    cli.buffer = new Buffer('DELETED\r\n');
+    cli.processBuffer();
     spy.calledOnce.should.be.true;
     var args = spy.args[0];
     should.not.exist(args[0]);
@@ -325,11 +325,11 @@ describe('MemcacheClient', function () {
 
   // Delete, missing
   it("should correctly report an error when deleting a non-existent key", function () {
-    var mock = sinon.mock(mc.sock).expects('write').once().withArgs('delete test-del\r\n');
+    var mock = sinon.mock(cli.sock).expects('write').once().withArgs('delete test-del\r\n');
     var spy = sinon.spy();
-    mc.del('test-del', spy);
-    mc.buffer = new Buffer('NOT_FOUND\r\n');
-    mc.processBuffer();
+    cli.del('test-del', spy);
+    cli.buffer = new Buffer('NOT_FOUND\r\n');
+    cli.processBuffer();
     spy.calledOnce.should.be.true;
     var args = spy.args[0];
     should.exist(args[0]);
@@ -340,11 +340,11 @@ describe('MemcacheClient', function () {
 
   // Version
   it("should correctly report the version of the server", function () {
-    var mock = sinon.mock(mc.sock).expects('write').once().withArgs('version\r\n');
+    var mock = sinon.mock(cli.sock).expects('write').once().withArgs('version\r\n');
     var spy = sinon.spy();
-    mc.version(spy);
-    mc.buffer = new Buffer('VERSION 1.4.5\r\n');
-    mc.processBuffer();
+    cli.version(spy);
+    cli.buffer = new Buffer('VERSION 1.4.5\r\n');
+    cli.processBuffer();
     spy.calledOnce.should.be.true;
     var args = spy.args[0];
     should.not.exist(args[0]);
@@ -357,9 +357,9 @@ describe('MemcacheClient', function () {
   it("should handle a correct cas request with an existing key as per memcache spec.", function () {
     var mock = sinon.mock(mc).expects('sendServer').once().withArgs('cas test-get 0 0 4 1000', 'lala');
     var spy = sinon.spy();
-    mc.cas('test-get', 'lala', 1000, spy);
-    mc.buffer = new Buffer('STORED\r\n');
-    mc.processBuffer();
+    cli.cas('test-get', 'lala', 1000, spy);
+    cli.buffer = new Buffer('STORED\r\n');
+    cli.processBuffer();
     spy.calledOnce.should.be.true;
     var args = spy.args[0];
     should.not.exist(args[0]);
@@ -372,9 +372,9 @@ describe('MemcacheClient', function () {
   it("should correctly respond with an error to a cas request with a missing key", function () {
     var mock = sinon.mock(mc).expects('sendServer').once().withArgs('cas test-get 0 0 4 1000', 'lala');
     var spy = sinon.spy();
-    mc.cas('test-get', 'lala', 1000, spy);
-    mc.buffer = new Buffer('NOT_FOUND\r\n');
-    mc.processBuffer();
+    cli.cas('test-get', 'lala', 1000, spy);
+    cli.buffer = new Buffer('NOT_FOUND\r\n');
+    cli.processBuffer();
     spy.calledOnce.should.be.true;
     var args = spy.args[0];
     should.exist(args[0]);
@@ -387,9 +387,9 @@ describe('MemcacheClient', function () {
   it("should correctly respond with an error to a cas request with an invalid cas number", function () {
     var mock = sinon.mock(mc).expects('sendServer').once().withArgs('cas test-get 0 0 4 1000', 'lala');
     var spy = sinon.spy();
-    mc.cas('test-get', 'lala', 1000, spy);
-    mc.buffer = new Buffer('EXISTS\r\n');
-    mc.processBuffer();
+    cli.cas('test-get', 'lala', 1000, spy);
+    cli.buffer = new Buffer('EXISTS\r\n');
+    cli.processBuffer();
     spy.calledOnce.should.be.true;
     var args = spy.args[0];
     should.exist(args[0]);
@@ -402,9 +402,9 @@ describe('MemcacheClient', function () {
   it("should correctly respond to a stats request", function () {
     var mock = sinon.mock(mc).expects('sendServer').once().withArgs('stats ');
     var spy = sinon.spy();
-    mc.stats(spy);
-    mc.buffer = new Buffer('STAT pid 1010\r\nSTAT uptime 12345\r\nEND\r\n');
-    mc.processBuffer();
+    cli.stats(spy);
+    cli.buffer = new Buffer('STAT pid 1010\r\nSTAT uptime 12345\r\nEND\r\n');
+    cli.processBuffer();
     spy.calledOnce.should.be.true;
     var args = spy.args[0];
     should.not.exist(args[0]);
@@ -418,9 +418,9 @@ describe('MemcacheClient', function () {
   it("should correctly respond to a stats items request", function () {
     var mock = sinon.mock(mc).expects('sendServer').once().withArgs('stats items');
     var spy = sinon.spy();
-    mc.stats('items', spy);
-    mc.buffer = new Buffer('STAT items:1:number 2\r\nSTAT items:1:age 529885\r\nEND\r\n');
-    mc.processBuffer();
+    cli.stats('items', spy);
+    cli.buffer = new Buffer('STAT items:1:number 2\r\nSTAT items:1:age 529885\r\nEND\r\n');
+    cli.processBuffer();
     spy.calledOnce.should.be.true;
     var args = spy.args[0];
     should.not.exist(args[0]);
@@ -434,9 +434,9 @@ describe('MemcacheClient', function () {
   it("should correctly respond to a stats sizes request", function () {
     var mock = sinon.mock(mc).expects('sendServer').once().withArgs('stats sizes');
     var spy = sinon.spy();
-    mc.stats('sizes', spy);
-    mc.buffer = new Buffer('STAT 101010 21\r\nEND\r\n');
-    mc.processBuffer();
+    cli.stats('sizes', spy);
+    cli.buffer = new Buffer('STAT 101010 21\r\nEND\r\n');
+    cli.processBuffer();
     spy.calledOnce.should.be.true;
     var args = spy.args[0];
     should.not.exist(args[0]);
@@ -450,9 +450,9 @@ describe('MemcacheClient', function () {
   it("should correctly respond to a stats slabs request", function () {
     var mock = sinon.mock(mc).expects('sendServer').once().withArgs('stats slabs');
     var spy = sinon.spy();
-    mc.stats('slabs', spy);
-    mc.buffer = new Buffer('STAT 1:cas_hits 5\r\nSTAT 1:cas_badval 0\r\nSTAT active_slabs 1\r\nSTAT total_malloced 1048512\r\nEND\r\n');
-    mc.processBuffer();
+    cli.stats('slabs', spy);
+    cli.buffer = new Buffer('STAT 1:cas_hits 5\r\nSTAT 1:cas_badval 0\r\nSTAT active_slabs 1\r\nSTAT total_malloced 1048512\r\nEND\r\n');
+    cli.processBuffer();
     spy.calledOnce.should.be.true;
     var args = spy.args[0];
     should.not.exist(args[0]);

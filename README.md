@@ -17,50 +17,43 @@ serious test of scale, time, with anomalous conditions thrown in to ensure fault
 temic aberrations. A full test-suite to demonstrate correctness and probe edge cases is also pending. Use at your
 own risk!
 
-### TODO:
-
-    ( ) Complete documentation
-    ( ) Installation ready
-
 ### Roadmap
 
-    1.1  : JSON, Binary adapters
-    1.2  : Clustering plugin adapter
+    v 0.8.0  : JSON, Binary adapters
+    v 1.0.0  : Clustering plugin adapter
 
-### Done:
-    (x) validate flaky network
-    (x) stats (with arguments)
-    (x) full test coverage
-    (x) mock server responses for client-server tests
-    (x) more robust handling of server errors
-    (x) validate binary
-    (x) delete
-    (x) increment
-    (x) decrement
-    (x) gets
-    (x) cas
-    (x) add
-    (x) replace
-    (x) append
-    (x) prepend
-    (x) add unit test story
-    (x) settable global expiration default
-    (x) get
-    (x) set
-    (x) stats (without arguments)
-    (x) version
-    (x) connection management
+### Changelog
+
+#### v 0.6.0
+
+* Documentation Complete
+* Installation Ready
+* Correctly handle network errors
+* Protocol implementation:
+    * stats, incl sub-commands 'slabs', 'items', 'sizes'
+    * delete
+    * get/gets
+    * set/add/replace/append/prepend/cas
+    * increment/decrement
+    * version
+* Correct binary storage/retrieval
+* Test framework for unit tests
+* Test framework for integration tests
+* Default expiration settings
 
 ## Install
 
-TBD
+    npm install mc
 
 ## Usage
 
 ### Connection
 
-    var MemcacheClient = require('memcache-client');
-    var mc = new MemcacheClient('localhost', 11211);
+    var mc = require('mc');
+    var client = new mc.Client('localhost', 11211);
+    client.connect(function() {
+      console.log("I am now connected to memcache!");
+    }
 
 ### Error responses
 
@@ -77,19 +70,19 @@ ancient installations). The exptime is the time-to-live terminus in standard uni
 expiration. The add, replace, prepend and append methods are all identical, with the exception of the non-success
 results, noted below.
 
-    mc.set( 'myKey', 'myVal', { flags: 0, exptime: 0}, function(err, status) {
+    client.set( 'myKey', 'myVal', { flags: 0, exptime: 0}, function(err, status) {
       if (!err) { 
         console.log(status); // 'STORED' on success!
       }
     });
 
-    mc.add( 'myKey', 'myVal', function(err, response) { // Flags parameter is optional.
+    client.add( 'myKey', 'myVal', function(err, response) { // Flags parameter is optional.
       if (!err) { // Error types can be NOT_STORED
         console.log(status); // 'STORED' on success!
       }
     });
 
-    mc.cas( 'myKey', 'myNewVal', casvalue, {flags: 0, exptime: 0}, function(err, status) {
+    client.cas( 'myKey', 'myNewVal', casvalue, {flags: 0, exptime: 0}, function(err, status) {
       if (!err) { // Error types can be EXISTS, or NOT_FOUND
         console.log(status); // 'STORED' on success!
       }
@@ -110,12 +103,12 @@ Failure Responses:
 The value parameter in these methods is optional, and defaults to 1.
 Possible error types: NOT_FOUND, when the key does not exist; CLIENT_ERROR, when the value is not numeric.
 
-    mc.incr( 'myKey', 2, function(err, value) {
+    client.incr( 'myKey', 2, function(err, value) {
       if (!err) {
         console.log(value); // Value returned on success
       }
     });
-    mc.decr( 'myKey', function(err, value) { // No value parameter, defaults to 1.
+    client.decr( 'myKey', function(err, value) { // No value parameter, defaults to 1.
       if (!err) {
         console.log(value);
       }
@@ -138,14 +131,14 @@ have the following properties:
 
 A couple of samples.
 
-    mc.get( 'myKey', function(err, vals) {
+    client.get( 'myKey', function(err, vals) {
       if (!err) {
         console.log('Values: ' + vals.length);
         if (vals.length) {
           console.log(vals[0].value);
     } } }
 
-    mc.gets( 'myKey', function(err, vals) {
+    client.gets( 'myKey', function(err, vals) {
       if (!err) {
         if (vals.length) {
           mc.cas( 'myKey', 'myNewVal', vals[0].cas, { flags: 0, exptime: 0 }, function (err, status) {
@@ -155,7 +148,7 @@ A couple of samples.
 
 ### Version
 
-    mc.version( function(err, version) {
+    client.version( function(err, version) {
       if (!err) {
         console.log(version);
       }
@@ -163,7 +156,7 @@ A couple of samples.
 
 ### Stats
 
-    mc.stats( function(err, stats) {
+    client.stats( function(err, stats) {
       if (!err) {
         // E.g.: how many bytes are being stored?
         // Check your local memcache installation for all the options!
@@ -171,20 +164,20 @@ A couple of samples.
       }
     }
 
-Stats may also take several sub-commands. Currently documented commands are: 'slabs', 'items', and 'sizes'. In
-these cases, appropriate datastructures are returned, as indicated below. Other stats directives, undocumented
-or not-yet-invented will be parsed by the default parser.
+Stats may also take several sub-commands. Currently documented commands are: 'slabs', 'items', and 'sizes'. These
+subcommands return appropriate datastructures as indicated below. Other stats variants, currently undocumented or 
+not-yet-invented, will be parsed by the default parser.
 
-Subcommands:
+#### Subcommands:
    
-    mc.stats( 'sizes', function(err, stats) {
+    client.stats( 'sizes', function(err, stats) {
       if (!err) {
         console.log(stats);
         // { bytes: <bytes>, items: <items> }
       }
     }
 	
-    mc.stats( 'items', function(err, stats) {
+    client.stats( 'items', function(err, stats) {
       if (!err) {
         console.log(stats);
         // { slabs: [ , { number: <items>, age: <age>, ... etc. } ] } 
@@ -192,7 +185,7 @@ Subcommands:
       }
     }
 
-    mc.stats( 'slabs', function(err, stats) {
+    client.stats( 'slabs', function(err, stats) {
       if (!err) {
         console.log(stats);
         // { active_slabs: <num slabs>, total_malloced: <total mem>, slabs: [ , { chunk_size: <size>, ... } ] }
@@ -202,6 +195,7 @@ Subcommands:
 
 ## Testing
 
-Unit tests may be run by executing 'make test'. All methods have basic test and error coverage. There are some
-untested edge cases and network conditions remaining.
-
+Unit tests may be run by executing 'make test'. All methods have basic happy-case and error case coverage. Beyond
+unit tests, an integration test package, which expects a memcache running locally on port 11211 can be run by the
+command 'make integration'. These longer running tests exercise the full api in a real-world simulation including
+network failure scenarios.
