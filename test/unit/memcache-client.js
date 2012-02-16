@@ -27,16 +27,16 @@ describe('MemcacheClient', function () {
     var mock = sinon.mock(cli.sock).expects('write').once().withArgs('get test-get\r\n');
     var spy = sinon.spy();
     cli.get('test-get', spy);
-    cli.buffer = new Buffer('VALUE fred 0 4\r\nlala\r\nEND\r\n');
+    cli.buffer = new Buffer('VALUE test-get 0 4\r\nlala\r\nEND\r\n');
     cli.processBuffer();
     spy.calledOnce.should.be.true;
     var args = spy.args[0];
     should.not.exist(args[0]);
     should.exist(args[1]);
-    args[1][0].key.should.equal('fred');
-    args[1][0].flags.should.equal('0');
-    args[1][0].size.should.equal(4);
-    args[1][0].val.should.equal('lala');
+    should.exist(args[1]['test-get']);
+    args[1]['test-get'].flags.should.equal('0');
+    args[1]['test-get'].size.should.equal(4);
+    args[1]['test-get'].val.should.equal('lala');
     mock.verify();
   });
 
@@ -46,17 +46,54 @@ describe('MemcacheClient', function () {
     mock.expects('write').once().withArgs('gets test-get\r\n');
     var spy = sinon.spy();
     cli.gets('test-get', spy);
-    cli.buffer = new Buffer('VALUE fred 0 4 1000\r\nlala\r\nEND\r\n');
+    cli.buffer = new Buffer('VALUE test-get 0 4 1000\r\nlala\r\nEND\r\n');
+    cli.processBuffer();
+    spy.calledOnce.should.be.true;
+    var args = spy.args[0];
+    should.not.exist(args[0]);
+    should.exist(args[1]['test-get']);
+    args[1]['test-get'].flags.should.equal('0');
+    args[1]['test-get'].size.should.equal(4);
+    args[1]['test-get'].val.should.equal('lala');
+    args[1]['test-get'].cas.should.equal('1000');
+    mock.verify();
+  });
+
+  // Get Not Found
+  it("should handle a get request that does not find a value correctly.", function() {
+    var mock = sinon.mock(cli.sock);
+    mock.expects('write').once().withArgs('gets test-get\r\n');
+    var spy = sinon.spy();
+    cli.gets('test-get', spy);
+    cli.buffer = new Buffer('END\r\n');
+    cli.processBuffer();
+    spy.calledOnce.should.be.true;
+    var args = spy.args[0];
+    should.exist(args[0]);
+    args[0].type.should.equal('NOT_FOUND');
+    should.not.exist(args[1]);
+    mock.verify();
+  });
+
+  // Multi get
+  it("should handle a multiget with mixed values correctly.", function() {
+    var mock = sinon.mock(cli.sock);
+    mock.expects('write').once().withArgs('get test1 test2 test3\r\n');
+    var spy = sinon.spy();
+    cli.get(['test1', 'test2', 'test3'], spy);
+    cli.buffer = new Buffer('VALUE test1 0 4 1000\r\nlala\r\nVALUE test3 0 4 1000\r\noboe\r\nEND\r\n');
     cli.processBuffer();
     spy.calledOnce.should.be.true;
     var args = spy.args[0];
     should.not.exist(args[0]);
     should.exist(args[1]);
-    args[1][0].key.should.equal('fred');
-    args[1][0].flags.should.equal('0');
-    args[1][0].size.should.equal(4);
-    args[1][0].val.should.equal('lala');
-    args[1][0].cas.should.equal('1000');
+    should.exist(args[1]['test1']);
+    should.exist(args[1]['test3']);
+    should.not.exist(args[1]['test2']);
+    args[1]['test1'].flags.should.equal('0');
+    args[1]['test1'].size.should.equal(4);
+    args[1]['test1'].val.should.equal('lala');
+    args[1]['test3'].val.should.equal('oboe');
     mock.verify();
   });
 

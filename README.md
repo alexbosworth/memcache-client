@@ -10,13 +10,6 @@ Specifically, this client implements: https://github.com/memcached/memcached/blo
 
 This library does draw inspiration from both 3rd-Eden, elbart, and ddopson: but it is a ground-up rewrite.
 
-## Status
-
-All critical aspects of the protocol are now implemented and tested, however the whole business has yet to pass a
-serious test of scale, time, with anomalous conditions thrown in to ensure fault tolerance and resiliency to sys-
-temic aberrations. A full test-suite to demonstrate correctness and probe edge cases is also pending. Use at your
-own risk!
-
 ### Roadmap
 
     v 0.8.0  : JSON, Binary adapters
@@ -36,6 +29,7 @@ own risk!
     * set/add/replace/append/prepend/cas
     * increment/decrement
     * version
+* Multi-get support
 * Correct binary storage/retrieval
 * Test framework for unit tests
 * Test framework for integration tests
@@ -116,9 +110,13 @@ Possible error types: NOT_FOUND, when the key does not exist; CLIENT_ERROR, when
 
 ### Get/Gets
 
-Get may take either a single key or an array of keys. The return result will alwyas be an array, although when no
-results are delivered from the server, this array will be empty. On error, the array will be null. Returned items
-have the following properties:
+Get may take a single key, or an array of keys. Keys may not contain whitespace: a string with whitespace will be
+interpreted as multiple keys. The return result is always a map of each key found to a container including value.
+If no results were found, either for one or multiple keys, the callback will be handed an error structure of type
+'NOT_FOUND'. If some of the keys in a multi-get call were not found no error will be set and the keys will not be
+present in the response object.
+
+The response object:
 
     {
       buffer: <the raw byte buffer, for binary values>
@@ -131,17 +129,15 @@ have the following properties:
 
 A couple of samples.
 
-    client.get( 'myKey', function(err, vals) {
+    client.get( 'myKey', function(err, response) {
       if (!err) {
-        console.log('Values: ' + vals.length);
-        if (vals.length) {
-          console.log(vals[0].value);
-    } } }
+        console.log(response['myKey']);
+    } }
 
-    client.gets( 'myKey', function(err, vals) {
+    client.gets( 'myKey', function(err, response) {
       if (!err) {
-        if (vals.length) {
-          mc.cas( 'myKey', 'myNewVal', vals[0].cas, { flags: 0, exptime: 0 }, function (err, status) {
+        if (response['myKey') {
+          mc.cas( 'myKey', 'myNewVal', response['myKey].cas, { flags: 0, exptime: 0 }, function (err, status) {
             if (!err) {
               console.log(status); // 'STORED' if the calue was not changed by another process.
     } } } } }
@@ -198,4 +194,6 @@ not-yet-invented, will be parsed by the default parser.
 Unit tests may be run by executing 'make test'. All methods have basic happy-case and error case coverage. Beyond
 unit tests, an integration test package, which expects a memcache running locally on port 11211 can be run by the
 command 'make integration'. These longer running tests exercise the full api in a real-world simulation including
-network failure scenarios.
+network failure scenarios. There is an even longer running app: test/simulation/runlong.js which may be used when
+testing more complicated network / server failure scenarios.
+
