@@ -17,6 +17,10 @@ This library does draw inspiration from both 3rd-Eden, elbart, and ddopson: but 
 
 ### Changelog
 
+#### v 0.6.1
+
+* Fix integration tests for multi-get format changes.
+
 #### v 0.6.0
 
 * Documentation Complete

@@ -44,13 +44,14 @@ function del(iter) {
 
 function get(iter) {
   var iteration = iter;
+  var key = 'K' + iter;
   cli.get('K' + iter, function(err, response) {
     if (err) { log("GET",err.type ); } 
     else     {
-      if (iteration != response.val) {
+      if (iteration != response[key].val) {
 	log("GET", "*********************** " + iteration + ":" + response.val);
       } else {	  
-	log("GET", "OK: " + response.val); }
+	log("GET", "OK: " + response[key].val); }
       }
   });
 }

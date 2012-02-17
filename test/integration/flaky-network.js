@@ -7,8 +7,9 @@ var count = 1;
 
 function readFromServer(iter, cli) {
   var delay = Math.floor(Math.random() * 3000);
+  var key = 'k' + iter;
   setTimeout(function () {
-    cli.get('k' + iter, function (err, response) {
+    cli.get(key, function (err, response) {
       if (err) {
 	// Hack.
         if (err.type !== 'NOT_FOUND' && err.type !== 'CONNECTION_ERROR') {
@@ -16,7 +17,7 @@ function readFromServer(iter, cli) {
 	}
       }
       else {
-        Number(response.val).should.equal(iter);
+        Number(response[key].val).should.equal(iter);
       }
       count++;
     });
