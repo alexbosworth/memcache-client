@@ -10,9 +10,10 @@ Specifically, this client implements: https://github.com/memcached/memcached/blo
 
 This library does draw inspiration from both 3rd-Eden, elbart, and ddopson: but it is a ground-up rewrite.
 
-### Roadmap
 
-    v 1.0.0  : Clustering plugin model
+### Status
+
+* Building a clustering plugin model.
 
 ### Changelog
 
