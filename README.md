@@ -200,7 +200,7 @@ The client may be configured with a prebuilt or a custom response adapter. The p
 * `mc.Adapter.binary`
 * `mc.Adapter.json`
 
-The role of an adapter is format the results of a `get` or `gets` request for the convenience of the application.
+The role of an adapter is to format the results of a `get` or `gets` call for the convenience of the application.
 
 The `raw` adapter is instructive. It returns:
 
@@ -224,7 +224,7 @@ By way of example, the implementation of the json adapter follows:
       } catch (x) {
         return { val: results.buffer.toString('utf8') };
       }
-   };
+    };
 
 (And thus, you see, that invalid json will result in an object mapping 'val' to whatever *was* in memcache.)
 
