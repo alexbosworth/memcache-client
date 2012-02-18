@@ -17,7 +17,7 @@ function readFromServer(iter, cli) {
 	}
       }
       else {
-        Number(response[key].val).should.equal(iter);
+        Number(response[key]).should.equal(iter);
       }
       count++;
     });
@@ -26,7 +26,7 @@ function readFromServer(iter, cli) {
 
 describe('MemcacheClient', function () {
   it("should handle a dropped collection without data corruption", function (done) {
-    var cli = new mc.Client();
+    var cli = new mc.Client();    
     cli.connect(function () {
       for (var i = 1; i <= 50000; i++) {
         cli.set('k' + i, i, function (err, response) {

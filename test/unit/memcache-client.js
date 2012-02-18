@@ -22,10 +22,83 @@ describe('MemcacheClient', function () {
     mock.verify();
   });
 
-  // Get
-  it("should handle a correct get request in accordance with the memcache spec.", function () {
+  // JSON Adapter
+  it("should apply the json adapter for a successful json result.", function() {
     var mock = sinon.mock(cli.sock).expects('write').once().withArgs('get test-get\r\n');
     var spy = sinon.spy();
+    cli.setAdapter(mc.Adapter.json);
+    cli.get('test-get', spy);
+    cli.buffer = new Buffer('VALUE test-get 0 18\r\n{ "lala": "fred" }\r\nEND\r\n');
+    cli.processBuffer();
+    spy.calledOnce.should.be.true;
+    var args = spy.args[0];
+    should.not.exist(args[0]);
+    should.exist(args[1]);
+    should.exist(args[1]['test-get']);
+    args[1]['test-get'].lala.should.equal('fred');
+    mock.verify();    	 
+  });
+
+  // JSON Adapter Fail
+  it("should apply the json adapter and handle non-json content.", function() {
+    var mock = sinon.mock(cli.sock).expects('write').once().withArgs('get test-get\r\n');
+    var spy = sinon.spy();
+    cli.setAdapter(mc.Adapter.json);
+    cli.get('test-get', spy);
+    cli.buffer = new Buffer('VALUE test-get 0 4\r\nfred\r\nEND\r\n');
+    cli.processBuffer();
+    spy.calledOnce.should.be.true;
+    var args = spy.args[0];
+    should.not.exist(args[0]);
+    should.exist(args[1]);
+    should.exist(args[1]['test-get']);
+    args[1]['test-get'].val.should.equal('fred');
+    mock.verify();    	 
+  });
+
+  // Binary Adapter
+  it("should apply the binary adapter for a successful result.", function() {
+    var mock = sinon.mock(cli.sock).expects('write').once().withArgs('get test-get\r\n');
+    var spy = sinon.spy();
+    cli.setAdapter(mc.Adapter.binary);
+    cli.get('test-get', spy);
+    cli.buffer = new Buffer('VALUE test-get 0 4\r\n1234\r\nEND\r\n');
+    cli.buffer[20] = 11;
+    cli.buffer[21] = 12;
+    cli.buffer[22] = 13;
+    cli.buffer[23] = 14;
+    cli.processBuffer();
+    spy.calledOnce.should.be.true;
+    var args = spy.args[0];
+    should.not.exist(args[0]);
+    should.exist(args[1]);
+    should.exist(args[1]['test-get']);
+    should.deepEqual(args[1]['test-get'], new Buffer([11,12,13,14]));
+    mock.verify();
+  });
+  
+  // String Adapter
+  it("should apply the string adapter for a simple string result.", function() {
+    var mock = sinon.mock(cli.sock).expects('write').once().withArgs('get test-get\r\n');
+    var spy = sinon.spy();
+    cli.setAdapter(mc.Adapter.string);
+    cli.get('test-get', spy);
+    cli.buffer = new Buffer('VALUE test-get 0 9\r\nA String!\r\nEND\r\n');
+    cli.processBuffer();
+    spy.calledOnce.should.be.true;
+    var args = spy.args[0];
+    should.not.exist(args[0]);
+    should.exist(args[1]);
+    should.exist(args[1]['test-get']);
+    args[1]['test-get'].should.equal('A String!');
+    mock.verify();    	 
+  });
+  
+  // Raw Adapter
+  it("should apply the raw adapter for a full result structure.", function() {
+    var mock = sinon.mock(cli.sock).expects('write').once().withArgs('get test-get\r\n');
+    var spy = sinon.spy();
+    cli.setAdapter(mc.Adapter.raw);
     cli.get('test-get', spy);
     cli.buffer = new Buffer('VALUE test-get 0 4\r\nlala\r\nEND\r\n');
     cli.processBuffer();
@@ -36,8 +109,25 @@ describe('MemcacheClient', function () {
     should.exist(args[1]['test-get']);
     args[1]['test-get'].flags.should.equal('0');
     args[1]['test-get'].size.should.equal(4);
-    args[1]['test-get'].val.should.equal('lala');
+    should.deepEqual(args[1]['test-get'].buffer, new Buffer('lala'));
     mock.verify();
+  });
+
+
+  // Get
+  it("should handle a correct get request in accordance with the memcache spec.", function () {
+    var mock = sinon.mock(cli.sock).expects('write').once().withArgs('get test-get\r\n');
+    var spy = sinon.spy();
+    cli.get('test-get', spy);
+    cli.buffer = new Buffer('VALUE test-get 0 9\r\nA String!\r\nEND\r\n');
+    cli.processBuffer();
+    spy.calledOnce.should.be.true;
+    var args = spy.args[0];
+    should.not.exist(args[0]);
+    should.exist(args[1]);
+    should.exist(args[1]['test-get']);
+    args[1]['test-get'].should.equal('A String!');
+    mock.verify();    	 
   });
 
   // Gets
@@ -45,15 +135,14 @@ describe('MemcacheClient', function () {
     var mock = sinon.mock(cli.sock);
     mock.expects('write').once().withArgs('gets test-get\r\n');
     var spy = sinon.spy();
-    cli.gets('test-get', spy);
+    cli.setAdapter(mc.Adapter.string);
+    cli.gets('test-get', spy);    
     cli.buffer = new Buffer('VALUE test-get 0 4 1000\r\nlala\r\nEND\r\n');
     cli.processBuffer();
     spy.calledOnce.should.be.true;
     var args = spy.args[0];
     should.not.exist(args[0]);
     should.exist(args[1]['test-get']);
-    args[1]['test-get'].flags.should.equal('0');
-    args[1]['test-get'].size.should.equal(4);
     args[1]['test-get'].val.should.equal('lala');
     args[1]['test-get'].cas.should.equal('1000');
     mock.verify();
@@ -80,8 +169,9 @@ describe('MemcacheClient', function () {
     var mock = sinon.mock(cli.sock);
     mock.expects('write').once().withArgs('get test1 test2 test3\r\n');
     var spy = sinon.spy();
+    cli.setAdapter(mc.Adapter.string);
     cli.get(['test1', 'test2', 'test3'], spy);
-    cli.buffer = new Buffer('VALUE test1 0 4 1000\r\nlala\r\nVALUE test3 0 4 1000\r\noboe\r\nEND\r\n');
+    cli.buffer = new Buffer('VALUE test1 0 4\r\nlala\r\nVALUE test3 0 4\r\noboe\r\nEND\r\n');
     cli.processBuffer();
     spy.calledOnce.should.be.true;
     var args = spy.args[0];
@@ -90,10 +180,8 @@ describe('MemcacheClient', function () {
     should.exist(args[1]['test1']);
     should.exist(args[1]['test3']);
     should.not.exist(args[1]['test2']);
-    args[1]['test1'].flags.should.equal('0');
-    args[1]['test1'].size.should.equal(4);
-    args[1]['test1'].val.should.equal('lala');
-    args[1]['test3'].val.should.equal('oboe');
+    args[1]['test1'].should.equal('lala');
+    args[1]['test3'].should.equal('oboe');
     mock.verify();
   });
 
