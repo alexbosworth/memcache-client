@@ -41,12 +41,12 @@ describe('MemcacheClient', function () {
       }
     });
     setTimeout(function () {
-      cli.sendServer('quit\r\n');
+      cli.connections[0].restart();
     }, 200);
     var t = setInterval(function () {
       if (count >= 50000) {
         clearInterval(t);
-        cli.close();
+        cli.disconnect();
         done();
       }
     }, 500);
