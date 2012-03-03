@@ -48,10 +48,10 @@ function get(iter) {
   cli.get('K' + iter, function(err, response) {
     if (err) { log("GET",err.type ); } 
     else     {
-      if (iteration != response[key].val) {
-	log("GET", "*********************** " + iteration + ":" + response.val);
+      if (iteration != response[key]) {
+	log("GET", "*********************** " + iteration + ":" + response[key]);
       } else {	  
-	log("GET", "OK: " + response[key].val); }
+	log("GET", "OK: " + response[key]); }
       }
   });
 }
@@ -90,6 +90,6 @@ var t = setInterval(function() {
   if (count >= max) {
     console.log("Done.");
     clearInterval(t);
-    cli.close();
+    cli.disconnect();
   }
 }, 1000);
