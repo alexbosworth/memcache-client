@@ -10,12 +10,18 @@ Specifically, this client implements: https://github.com/memcached/memcached/blo
 
 This library does draw inspiration from both 3rd-Eden, elbart, and ddopson: but it is a ground-up rewrite.
 
-
 ### Status
 
-* Building a clustering plugin model.
+* Real world testing of beta candidate for version 1.0.0
+* Documentation under review
 
 ### Changelog
+
+#### v 0.9.0
+
+* Clustering strategies and content adapters now in beta. (See documentation, below.)
+* Refactor connection and client logic.
+* Rewrite tests for refactored model, better unit division.
 
 #### v 0.8.0
 
@@ -53,12 +59,61 @@ This library does draw inspiration from both 3rd-Eden, elbart, and ddopson: but 
 
 ## Usage
 
-### Connection
+### Creation
+
+The constructor takes three parameters: a server list (or just a server), an adapter, and a strategy. Adapter and
+Strategy functions are described more thoroughly below.
 
     var mc = require('mc');
-    var client = new mc.Client('localhost', 11211);
+
+    // All defaults
+    var cli1 = new mc.Client();
+
+    // Default adapter and strategy
+    var cli2 = new mc.Client(['2.3.4.5', '3.4.5.6']);
+    
+    // Single connection, default strategy and off-the-shelf json adapter
+    var cli3 = new mc.Client('1.2.3.4', mc.Adapter.json);
+
+    // Sharded connection, provided adapter and strategy
+    var cli4 = new mc.Client(['1.2.3.4','2.3.4.5'], mc.Adapter.raw, mc.Strategy.hash);
+
+    // Sharded connection, default adapter, provided strategy
+    var cli5 = new mc.Client(['1.2.3.4','2.3.4.5'], null, mc.Strategy.hash);
+
+### Connection
+
+#### Single connection to localhost
+
+    var mc = require('mc');
+    var client = new mc.Client();
     client.connect(function() {
-      console.log("I am now connected to memcache!");
+      console.log("I am now connected to the localhost memcache on port 11211!");
+    }
+
+#### Single connection to a specified host
+
+    var client = new mc.Client('1.2.3.4');
+    client.connect(function() {
+      console.log("I am now connected to the memcache on host 1.2.3.4 using the default port 11211!");
+    }
+
+#### Connection to an array of hosts using the default CRC-hash sharding strategy
+
+    var client = new mc.Client(['1.2.3.4', '2.3.4.5', '3.4.5.6', '4.5.6.7']);
+    client.connect(function() {
+      console.log("I am now connected to the memcache on four hosts using the default port 11211!");
+    }
+
+#### Connection to an array of hosts using a custom sharding strategy but no adapter
+
+    var strategy = function(key, max) {
+      return key % max;
+    }
+
+    var client = new mc.Client(['1.2.3.4', '2.3.4.5', '3.4.5.6', '4.5.6.7'], null, strategy );
+    client.connect(function() {
+      console.log("I am now connected to the memcache on four hosts using the default port 11211!");
     }
 
 ### Error responses
