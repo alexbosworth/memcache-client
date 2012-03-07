@@ -12,10 +12,14 @@ This library does draw inspiration from both 3rd-Eden, elbart, and ddopson: but 
 
 ### Status
 
-* Real world testing of beta candidate for version 1.0.0
-* Documentation under review
+* 1.0.0 is now available. 
+* Additional documentation forthcoming, better code documentation.
 
 ### Changelog
+
+#### v 1.0.0
+
+* Full production testing of version 0.9.0 complete, promoted to ready-for-prime-time.
 
 #### v 0.9.0
 
