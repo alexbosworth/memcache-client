@@ -202,19 +202,27 @@ A couple of samples.
 
 ### Version
 
+Version will return an array of versions for each server in the memcache array.
+
     client.version( function(err, version) {
       if (!err) {
         console.log(version);
       }
     }
 
+Output might be:
+
+    [ '1.4.5', '1.4.5', '1.4.6' ]
+
 ### Stats
+
+All stats calls will return an array of stats values from each of the servers in the array.
 
     client.stats( function(err, stats) {
       if (!err) {
         // E.g.: how many bytes are being stored?
         // Check your local memcache installation for all the options!
-        console.log(stats.bytes);
+        console.log(stats[0].bytes);
       }
     }
 
@@ -227,14 +235,14 @@ not-yet-invented, will be parsed by the default parser.
     client.stats( 'sizes', function(err, stats) {
       if (!err) {
         console.log(stats);
-        // { bytes: <bytes>, items: <items> }
+        // [ { bytes: <bytes>, items: <items> } ]
       }
     }
 	
     client.stats( 'items', function(err, stats) {
       if (!err) {
         console.log(stats);
-        // { slabs: [ , { number: <items>, age: <age>, ... etc. } ] } 
+        // [ { slabs: [ , { number: <items>, age: <age>, ... etc. } ] } ]
         // Note that slabs is a one-based array.
       }
     }
@@ -242,7 +250,7 @@ not-yet-invented, will be parsed by the default parser.
     client.stats( 'slabs', function(err, stats) {
       if (!err) {
         console.log(stats);
-        // { active_slabs: <num slabs>, total_malloced: <total mem>, slabs: [ , { chunk_size: <size>, ... } ] }
+        // [ { active_slabs: <num slabs>, total_malloced: <total mem>, slabs: [ , { chunk_size: <size>, ... } ] } ]
         // Note that here also, slabs is a one based array.
       }
     }
@@ -283,6 +291,22 @@ By way of example, the implementation of the json adapter follows:
     };
 
 (And thus, you see, that invalid json will result in an object mapping 'val' to whatever *was* in memcache.)
+
+## Strategies
+
+The default sharding strategy is none for a single connection, or CRC sharding on the key for arrays of more than
+one. These are available for explicit selection:
+
+* 'mc.Strategy.solo'
+* 'mc.Strategy.hash'
+
+Custom strategies, however, may be supplied to achieve other sharding policies. The strategy is a function taking
+two parameters: a key and the size of the array. It must return an integer greater than or equal to zero and less
+than the max value provided. E.g.:
+
+    function numericShard(key, max) {
+      return key % max;
+    }
 
 ## Testing
 
