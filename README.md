@@ -12,50 +12,8 @@ This library does draw inspiration from both 3rd-Eden, elbart, and ddopson: but 
 
 ### Status
 
-* 1.0.0 is now available. 
+* 1.0.1 is now available. 
 * Additional documentation forthcoming, better code documentation.
-
-### Changelog
-
-#### v 1.0.0
-
-* Full production testing of version 0.9.0 complete, promoted to ready-for-prime-time.
-
-#### v 0.9.0
-
-* Clustering strategies and content adapters now in beta. (See documentation, below.)
-* Refactor connection and client logic.
-* Rewrite tests for refactored model, better unit division.
-
-#### v 0.8.0
-
-* Result adapter model
-    * JSON Parser
-    * Binary 
-    * Simple String (Default)
-    * Raw
-
-#### v 0.6.1
-
-* Fix integration tests for multi-get format changes.
-
-#### v 0.6.0
-
-* Documentation Complete
-* Installation Ready
-* Correctly handle network errors
-* Protocol implementation:
-    * stats, incl sub-commands 'slabs', 'items', 'sizes'
-    * delete
-    * get/gets
-    * set/add/replace/append/prepend/cas
-    * increment/decrement
-    * version
-* Multi-get support
-* Correct binary storage/retrieval
-* Test framework for unit tests
-* Test framework for integration tests
-* Default expiration settings
 
 ## Install
 
@@ -320,3 +278,48 @@ command 'make integration'. These longer running tests exercise the full api in 
 network failure scenarios. There is an even longer running app: test/simulation/runlong.js which may be used when
 testing more complicated network / server failure scenarios.
 
+## Changelog
+
+### v 1.0.1
+
+* Fix bug for gets command.
+
+### v 1.0.0
+
+* Full production testing of version 0.9.0 complete, promoted to ready-for-prime-time.
+
+### v 0.9.0
+
+* Clustering strategies and content adapters now in beta. (See documentation, below.)
+* Refactor connection and client logic.
+* Rewrite tests for refactored model, better unit division.
+
+### v 0.8.0
+
+* Result adapter model
+    * JSON Parser
+    * Binary 
+    * Simple String (Default)
+    * Raw
+
+### v 0.6.1
+
+* Fix integration tests for multi-get format changes.
+
+### v 0.6.0
+
+* Documentation Complete
+* Installation Ready
+* Correctly handle network errors
+* Protocol implementation:
+    * stats, incl sub-commands 'slabs', 'items', 'sizes'
+    * delete
+    * get/gets
+    * set/add/replace/append/prepend/cas
+    * increment/decrement
+    * version
+* Multi-get support
+* Correct binary storage/retrieval
+* Test framework for unit tests
+* Test framework for integration tests
+* Default expiration settings
