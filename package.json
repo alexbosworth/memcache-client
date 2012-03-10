@@ -2,7 +2,7 @@
     "author": "bluejack <bluejack@bluejack.com>"
   , "name": "mc"
   , "description": "The memcache client for node.js. Correct, performant, flexible."
-  , "version": "1.0.1"
+  , "version": "1.0.2"
   , "main": "./lib/memcache-client"
   , "keyword": [
       "memcache"
