@@ -75,10 +75,12 @@ describe('Connection', function () {
   });
 
   it('should write a command with a value to the socket correctly', function() {
+    var buff = new Buffer('fla');
     var mock = sinon.mock(c.sock);
     mock.expects('write').once().withArgs('set\r\n');
-    mock.expects('write').once().withArgs('fla\r\n');
-    c.write(null, null, 'set', new Buffer('fla'));
+    mock.expects('write').once().withArgs(buff);
+    mock.expects('write').once().withArgs('\r\n');
+    c.write(null, null, 'set', buff);
     mock.verify();
   });
 
